@@ -5,10 +5,21 @@
 
 ---
 
+## 端口分配
+
+| 服务 | 容器内端口 | 宿主机端口 | 说明 |
+|------|------|------|------|
+| `model-card-web` (应用端) | 80 | **10001** | 用户访问入口，浏览器打开 `http://飞牛IP:10001` |
+| `model-card-server` (服务端) | 3001 | **10002** | API 服务（一般通过 web 反代访问，也可直连调试） |
+
+> 💡 端口可以改：编辑 `docker-compose.yml` 的 `ports: "XXXX:80"` 和 `"YYYY:3001"` 即可。
+
+---
+
 ## 方案概览
 
 ```
-浏览器 ─HTTP─→ [model-card-web:8080] ── /api/* 反向代理 ──→ [model-card-server:3001]
+浏览器 ─HTTP─→ [model-card-web:10001] ── /api/* 反向代理 ──→ [model-card-server:10002]
                        ↓ nginx                                          ↓ Fastify + @napi-rs/canvas
                   静态文件托管                                      字体打包在容器里
 ```
@@ -76,11 +87,18 @@ cd photo-casting-demo
 
 ### 第 4 步：自定义端口（可选）
 
-默认前端映射到 `8080`（避开飞牛OS WebUI 的 80）。要改就编辑 `docker-compose.yml`：
+默认端口：**应用端 10001，服务端 10002**（避开飞牛OS WebUI 的 80 端口）。
+
+要改就编辑 `docker-compose.yml`：
 
 ```yaml
-ports:
-  - "你的端口:80"   # 例如 "9000:80"
+services:
+  web:
+    ports:
+      - "你的端口:80"   # 例如 "11001:80"
+  server:
+    ports:
+      - "你的端口:3001" # 例如 "11002:3001"
 ```
 
 ### 第 5 步：构建 + 启动
@@ -120,9 +138,9 @@ docker compose exec server wget -qO- http://localhost:3001/api/ping
 
 ### 第 7 步：浏览器访问
 
-打开 `http://飞牛OS的IP:8080`
+打开 `http://飞牛OS的IP:10001`
 
-例如：`http://192.168.1.100:8080`
+例如：`http://192.168.1.100:10001`
 
 应该看到 Dashboard（项目列表）界面。**注意：所有用户数据存在访问这个 URL 的浏览器 IndexedDB 里**，换浏览器/换电脑看不到。
 
@@ -134,14 +152,14 @@ docker compose exec server wget -qO- http://localhost:3001/api/ping
 
 飞牛OS WebUI → 系统设置 → 防火墙 → 添加规则：
 - 协议：TCP
-- 端口：8080（或你自定义的）
+- 端口：10001、10002（或你自定义的）
 - 源 IP：局域网（如 `192.168.1.0/24`）或全部
 
 ### 反向代理（如果想用 80 端口）
 
 飞牛OS WebUI → 反向代理 → 添加：
 - 域名：你绑定的域名（如 `photo.example.com`）
-- 目标：`http://localhost:8080`
+- 目标：`http://localhost:10001`
 
 记得域名解析 A 记录指向飞牛OS IP。
 
@@ -214,15 +232,15 @@ docker compose up -d --build
 
 ## 故障排除
 
-### 端口 8080 已占用
+### 端口 10001 已占用
 
 ```bash
-# 看谁占 8080
-netstat -tlnp | grep 8080    # Linux
+# 看谁占 10001
+netstat -tlnp | grep 10001    # Linux
 
 # 改 docker-compose.yml 的端口映射
 ports:
-  - "9080:80"   # 换 9080
+  - "11001:80"   # 换 11001
 ```
 
 ### 容器一直重启（exit code 1）
@@ -278,7 +296,7 @@ A 记录：`photo.example.com` → 飞牛OS 公网 IP
 飞牛OS WebUI → 反向代理 → 添加：
 - 域名：`photo.example.com`
 - 协议：HTTPS（推荐）+ Let's Encrypt 自动证书
-- 反代目标：`http://localhost:8080`
+- 反代目标：`http://localhost:10001`
 
 ### 3. 验证
 
@@ -349,7 +367,7 @@ services:
 
 ### Q2：可以多用户吗？
 
-可以！只要局域网/外网的人能访问 `http://飞牛IP:8080`，任何浏览器都能用。但**数据各自隔离**（每人的 IndexedDB 独立）。
+可以！只要局域网/外网的人能访问 `http://飞牛IP:10001`，任何浏览器都能用。但**数据各自隔离**（每人的 IndexedDB 独立）。
 
 要"多用户共享项目数据"需要：
 - 改 IndexedDB 存到后端
@@ -360,21 +378,21 @@ services:
 ### Q3：可以装在外网访问吗？
 
 可以。确保：
-1. 飞牛OS 防火墙开放 8080（或反代到 443）
-2. 路由器端口转发 8080 → 飞牛OS
+1. 飞牛OS 防火墙开放 10001（或反代到 443）
+2. 路由器端口转发 10001 → 飞牛OS
 3. 公网 IP 或 DDNS 域名
 
 但 **强烈建议加 HTTPS**（飞牛OS 反代里配 Let's Encrypt 自动证书）。
 
 ### Q4：能跟飞牛OS 的 WebUI 共存吗？
 
-能。飞牛OS WebUI 占 80，我们的前端用 8080 避开。用户访问：
+能。飞牛OS WebUI 占 80，我们的前端用 10001 避开。用户访问：
 - 飞牛OS WebUI：`http://飞牛IP`
-- 模特卡片：`http://飞牛IP:8080`
+- 模特卡片：`http://飞牛IP:10001`
 
-或者在飞牛OS WebUI 反代里配 `photo.example.com` 转发到 `localhost:8080`，就能用 80/443 标准端口。
+或者在飞牛OS WebUI 反代里配 `photo.example.com` 转发到 `localhost:10001`，就能用 80/443 标准端口。
 
 ---
 
-*文档版本：v1.0 · 2026-08-18*
+*文档版本：v1.1 · 2026-08-18*
 *作者：Mavis*

@@ -11,7 +11,7 @@
 #   docker compose restart            # 重启
 #
 # 飞牛OS 注意事项：
-#   - 飞牛OS WebUI 占 80 端口，所以前端映射到 8080
+#   - 飞牛OS WebUI 占 80 端口，所以前端映射到 10001、服务端映射到 10002
 #   - 容器间通信用 service name（model-card-server），不走宿主机端口
 #   - 数据全在浏览器 IndexedDB，不在容器里，重启不丢
 
@@ -23,8 +23,10 @@ services:
     image: model-card-server:latest
     container_name: model-card-server
     restart: unless-stopped
-    expose:
-      - "3001"
+    # 服务端 API：宿主 10002 → 容器 3001
+    # 同时只 expose 给容器内（web 反代会用到），通过 ports 暴露给宿主机
+    ports:
+      - "10002:3001"
     # 飞牛OS / 多数 NAS：限制内存防止渲染大画布时 OOM
     deploy:
       resources:
@@ -49,10 +51,9 @@ services:
     image: model-card-web:latest
     container_name: model-card-web
     restart: unless-stopped
-    # 飞牛OS WebUI 已占 80 端口，前端用 8080
-    # 如需换端口，改这里 "宿主机端口:容器端口"
+    # 应用端：宿主 10001 → 容器 80
     ports:
-      - "8080:80"
+      - "10001:80"
     depends_on:
       server:
         condition: service_healthy
