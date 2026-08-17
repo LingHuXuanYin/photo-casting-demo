@@ -5,7 +5,7 @@
 #   Stage 2 (nginx): nginx 托管静态文件 + 反向代理 /api 到后端
 
 # ---- Stage 1: 构建 ----
-FROM node:20-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 

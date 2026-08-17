@@ -17,5 +17,8 @@ font-debug.log
 server-stdout.log
 server-stderr.log
 
+# TypeScript 编译缓存
+*.tsbuildinfo
+
 # AI 运行时文件
 .minimax/
