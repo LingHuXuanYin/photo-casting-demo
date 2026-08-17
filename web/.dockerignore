@@ -9,7 +9,6 @@ dist
 .gitignore
 Dockerfile
 .dockerignore
-nginx.conf
 test
 tests
 **/*.test.ts
