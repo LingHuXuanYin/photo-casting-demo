@@ -61,7 +61,10 @@ services:
       - "10001:80"
     depends_on:
       server:
-        condition: service_healthy
+        # 用 service_started 而不是 service_healthy：
+        # server 容器起来（即使内部崩了）就让 web 启动，
+        # UI 至少能看，导出/API 调用失败也比整个 stack 死掉强
+        condition: service_started
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost/"]
       interval: 10s
