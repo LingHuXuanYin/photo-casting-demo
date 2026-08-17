@@ -14,7 +14,8 @@ COPY tsconfig.json tsconfig.node.json ./
 COPY vite.config.ts ./
 COPY index.html ./
 
-RUN npm ci
+# 走国内 npm 镜像，飞牛OS / 国内部署加速
+RUN npm ci --registry=https://registry.npmmirror.com
 
 COPY src ./src
 RUN npm run build

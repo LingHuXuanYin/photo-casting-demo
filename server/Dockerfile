@@ -12,7 +12,8 @@ WORKDIR /app
 # 先 COPY package.json 安装依赖（利用 Docker 缓存，依赖没变就不重装）
 COPY package.json package-lock.json* ./
 COPY tsconfig.json ./
-RUN npm ci
+# 走国内 npm 镜像，飞牛OS / 国内部署加速
+RUN npm ci --registry=https://registry.npmmirror.com
 
 # 拷贝源码并编译
 COPY src ./src
@@ -28,7 +29,7 @@ ENV NODE_ENV=production
 
 # 只装生产依赖
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev --registry=https://registry.npmmirror.com && npm cache clean --force
 
 # 拷编译产物 + 字体（字体打包在项目里，启动时自动注册到 @napi-rs/canvas）
 COPY --from=builder /app/dist ./dist
