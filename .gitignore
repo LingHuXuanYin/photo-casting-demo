@@ -1,0 +1,21 @@
+node_modules/
+dist/
+*.log
+.env
+.env.local
+.DS_Store
+.vscode/
+.idea/
+
+# 测试产物（截图 / playwright 报告 / Node test 输出）
+playwright-report/
+test-results/
+ss-*.png
+screenshot-*.png
+render-*.jpg
+font-debug.log
+server-stdout.log
+server-stderr.log
+
+# AI 运行时文件
+.minimax/
