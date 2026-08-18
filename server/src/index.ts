@@ -16,12 +16,19 @@ const HOST = process.env.HOST ?? '0.0.0.0';
 const WEB_ORIGIN = process.env.WEB_ORIGIN ?? 'http://localhost:5173';
 
 async function bootstrap() {
+  const isDev = process.env.NODE_ENV !== 'production';
   const app = Fastify({
     logger: {
-      transport: {
-        target: 'pino-pretty',
-        options: { colorize: true, translateTime: 'HH:MM:ss' },
-      },
+      level: process.env.LOG_LEVEL ?? 'info',
+      // dev (npm run dev) 用 pino-pretty 带颜色，
+      // production (容器 / npm start) 用 pino 默认 JSON 输出到 stdout
+      // —— 不依赖 pino-pretty（它只在 devDependencies 里）
+      ...(isDev && {
+        transport: {
+          target: 'pino-pretty',
+          options: { colorize: true, translateTime: 'HH:MM:ss' },
+        },
+      }),
     },
     // 允许较大的请求体：画布元素含 base64 图片，
     // 10 张图 ≈ 5-10MB，加上其他 JSON 字段需要更多
