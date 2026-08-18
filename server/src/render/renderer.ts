@@ -24,27 +24,41 @@ import type {
 const SCALE_MAX = 4;
 
 /**
- * 异步加载所有图片（base64 dataURL）
+ * 把 dataURL 字符串转成 Buffer（@napi-rs/canvas 0.1.20 的 Image.src 同步接收 Buffer）
+ *
+ * 支持格式：data:image/<type>;base64,<base64-data>
+ * 暂不支持远程 URL（v1 项目里所有图片都是 base64 内嵌）
  */
-async function loadImages(elements: CanvasElement[]): Promise<Map<string, Image>> {
+function srcToBuffer(src: string): Buffer {
+  if (!src.startsWith('data:')) {
+    throw new Error('当前仅支持 dataURL，传入的 src 看起来不像 dataURL');
+  }
+  const comma = src.indexOf(',');
+  if (comma < 0) {
+    throw new Error('dataURL 格式错误：缺少 , 分隔符');
+  }
+  return Buffer.from(src.slice(comma + 1), 'base64');
+}
+
+/**
+ * 同步加载所有图片（@napi-rs/canvas 0.1.20 是同步 API）
+ *
+ * 0.1.20 的 Image 设 src 后立即可用，naturalWidth/naturalHeight 自动从图片元数据解析。
+ * 没有 onload/onerror（这些是 0.1.50+ 才加的）。
+ */
+function loadImages(elements: CanvasElement[]): Map<string, Image> {
   const map = new Map<string, Image>();
-  await Promise.all(
-    elements
-      .filter((el): el is ImageElement => el.type === 'image' && !!el.src && !el.isPlaceholder)
-      .map(async (el) => {
-        try {
-          const img = new Image();
-          await new Promise<void>((resolve, reject) => {
-            img.onload = () => resolve();
-            img.onerror = (e) => reject(new Error(`图片加载失败: ${e}`));
-            img.src = el.src;
-          });
-          map.set(el.id, img);
-        } catch (err) {
-          console.warn(`[render] 跳过无法加载的图片 ${el.id}:`, err);
-        }
-      }),
-  );
+  for (const el of elements) {
+    if (el.type !== 'image' || !el.src || el.isPlaceholder) continue;
+    try {
+      const buffer = srcToBuffer(el.src);
+      const img = new Image();
+      img.src = buffer; // 0.1.20 同步解析，赋值后即可用
+      map.set(el.id, img);
+    } catch (err) {
+      console.warn(`[render] 跳过无法加载的图片 ${el.id}:`, err);
+    }
+  }
   return map;
 }
 
@@ -223,8 +237,8 @@ export async function renderToBuffer(args: {
   ctx.fillStyle = args.canvas.background || '#FFFFFF';
   ctx.fillRect(0, 0, w, h);
 
-  // 预加载所有图片
-  const imageCache = await loadImages(args.elements);
+  // 预加载所有图片（0.1.20 同步）
+  const imageCache = loadImages(args.elements);
 
   // 按 zIndex 排序后绘制
   const sorted = [...args.elements].sort((a, b) => a.zIndex - b.zIndex);
