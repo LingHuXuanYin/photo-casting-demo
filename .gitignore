@@ -20,5 +20,11 @@ server-stderr.log
 # TypeScript 编译缓存
 *.tsbuildinfo
 
+# 个人本地配置（覆盖 env_config 默认值）
+env_config/.env_local
+env_config/.env_local.*
+# 平台特定 .env 临时副本
+env_config/.env_*.local
+
 # AI 运行时文件
 .minimax/

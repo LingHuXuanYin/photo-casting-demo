@@ -23,6 +23,9 @@ services:
     image: model-card-server:latest
     container_name: model-card-server
     restart: unless-stopped
+    # 环境配置：飞牛OS 平台从 env_config/.env_fnOS 读
+    env_file:
+      - env_config/.env_fnOS
     # 服务端 API：宿主 10002 → 容器 3001
     # 同时只 expose 给容器内（web 反代会用到），通过 ports 暴露给宿主机
     ports:
@@ -56,6 +59,9 @@ services:
     image: model-card-web:latest
     container_name: model-card-web
     restart: unless-stopped
+    # 环境配置（同 server）
+    env_file:
+      - env_config/.env_fnOS
     # 应用端：宿主 10001 → 容器 80
     ports:
       - "10001:80"
