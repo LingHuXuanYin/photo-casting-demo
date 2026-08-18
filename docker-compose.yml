@@ -36,17 +36,12 @@ services:
         limits:
           memory: 1G
     # 健康检查（用 ping 端点）
-    # server 冷启动要 5-8 秒（@napi-rs/canvas 加载 + 4 个字体注册），
-    # 飞牛OS / 弱 NAS 上可能更慢，所以放宽：
-    #   - start_period 10s → 30s：第一次 health check 之前给 30 秒宽限
-    #   - interval 30s → 10s：启动后 30 秒内每 10 秒检查一次
-    #   - retries 3 → 6：失败容忍 6 次（60 秒窗口）
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/ping"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
-      retries: 6
-      start_period: 30s
+      retries: 3
+      start_period: 10s
     # 渲染需要 50MB 上传（base64 图片），Fastify body limit 已设
     # 如果想保留导出的文件到 NAS 共享目录，可挂载：
     # volumes:
@@ -67,15 +62,12 @@ services:
       - "10001:80"
     depends_on:
       server:
-        # 用 service_started 而不是 service_healthy：
-        # server 容器起来（即使内部崩了）就让 web 启动，
-        # UI 至少能看，导出/API 调用失败也比整个 stack 死掉强
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost/"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
-      retries: 6
+      retries: 3
       start_period: 5s
     deploy:
       resources:

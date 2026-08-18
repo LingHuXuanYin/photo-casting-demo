@@ -5,8 +5,7 @@
 #   Stage 2 (nginx): nginx 托管静态文件 + 反向代理 /api 到后端
 
 # ---- Stage 1: 构建 ----
-# 飞牛OS 分支：用 node:20-alpine（NAPI 8 ABI 兼容 0.1.20 prebuild）
-FROM node:20-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 

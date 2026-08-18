@@ -5,9 +5,7 @@
 #   Stage 2 (production): 只拷编译产物 + 生产依赖 + 字体文件
 
 # ---- Stage 1: 构建 ----
-# 飞牛OS 分支：用 node:20-alpine（NAPI 8 ABI 完美兼容 0.1.20 prebuild，
-# 避免 Node 26 的 NAPI 9 ABI 兼容性问题）
-FROM node:20-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 
@@ -23,7 +21,7 @@ COPY fonts ./fonts
 RUN npm run build
 
 # ---- Stage 2: 运行时 ----
-FROM node:20-alpine
+FROM node:26-alpine
 
 WORKDIR /app
 
