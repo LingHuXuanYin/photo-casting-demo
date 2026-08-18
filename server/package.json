@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",
-    "@napi-rs/canvas": "^1.0.6",
+    "@napi-rs/canvas": "0.1.100",
     "fastify": "^4.28.1",
     "pdf-lib": "^1.17.1"
   },
